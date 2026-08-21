@@ -1,0 +1,6 @@
+{
+  "name": "Power BI Dashboard Viewer",
+  "description": "An interactive web page for embedding, viewing, and configuring Power BI dashboard reports with sample presets and custom URL support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
