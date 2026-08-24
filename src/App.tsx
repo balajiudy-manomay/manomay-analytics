@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
-import { EmbedViewer } from './components/EmbedViewer';
+import { PowerBIViewer } from './components/PowerBIViewer/PowerBIViewer';
 
 const DEFAULT_EMBED_URL =
   'https://playground.powerbi.com/sampleReportEmbed';
@@ -42,7 +42,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden select-none font-sans">
-      {/* Simple Top Header: Company Logo (Left) and Fullscreen (Right) */}
+      {/* Top Header: Company Logo & Controls */}
       {!isFullscreen && (
         <Header
           isFullscreen={isFullscreen}
@@ -50,9 +50,9 @@ export default function App() {
         />
       )}
 
-      {/* Main Power BI Embed View */}
+      {/* Main Power BI Universal Embed Host */}
       <main className="flex-1 w-full h-full relative overflow-hidden flex flex-col min-h-0">
-        <EmbedViewer
+        <PowerBIViewer
           embedUrl={embedUrl}
           containerRef={containerRef}
           isFullscreen={isFullscreen}
@@ -61,3 +61,4 @@ export default function App() {
     </div>
   );
 }
+
