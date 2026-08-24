@@ -1,15 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Header } from './components/Header';
-import { EmbedViewer } from './components/EmbedViewer';
+'use client';
 
-const DEFAULT_EMBED_URL =
-  'https://playground.powerbi.com/sampleReportEmbed';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Header } from '@/components/Header';
+import { EmbedViewer } from '@/components/EmbedViewer';
+import { ScreenData } from './page';
 
-export default function App() {
+interface AppProps {
+  screens: ScreenData[];
+  initialScreenId: string;
+}
+
+function AppContent({ screens, initialScreenId }: AppProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const embedUrl = import.meta.env.VITE_POWERBI_EMBED_URL || DEFAULT_EMBED_URL;
+  // Synchronize active screen with URL query parameter `?screen=`
+  const activeScreenId = searchParams.get('screen') || initialScreenId;
+  const activeScreen = screens.find((s) => s.id === activeScreenId) || screens[0];
+
+  const handleSelectScreen = (screenId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('screen', screenId);
+    router.push(`?${params.toString()}`);
+  };
 
   // Handle Fullscreen toggle
   const handleToggleFullscreen = () => {
@@ -42,9 +58,12 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden select-none font-sans">
-      {/* Simple Top Header: Company Logo (Left) and Fullscreen (Right) */}
+      {/* Primary Header with Screen Dropdown Selector */}
       {!isFullscreen && (
         <Header
+          screens={screens}
+          activeScreenId={activeScreen.id}
+          onSelectScreen={handleSelectScreen}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
         />
@@ -53,11 +72,21 @@ export default function App() {
       {/* Main Power BI Embed View */}
       <main className="flex-1 w-full h-full relative overflow-hidden flex flex-col min-h-0">
         <EmbedViewer
-          embedUrl={embedUrl}
+          embedUrl={activeScreen.url}
+          screenName={activeScreen.name}
+          envKey={activeScreen.envKey}
           containerRef={containerRef}
           isFullscreen={isFullscreen}
         />
       </main>
     </div>
+  );
+}
+
+export default function App(props: AppProps) {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen bg-slate-950" />}>
+      <AppContent {...props} />
+    </Suspense>
   );
 }
