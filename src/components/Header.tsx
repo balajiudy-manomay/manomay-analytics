@@ -15,20 +15,20 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFullscreen,
 }) => {
   return (
-    <header className="bg-slate-900/95 backdrop-blur-sm text-white border-b border-slate-800/80 h-9 px-3 flex items-center justify-between z-30 shrink-0 select-none shadow-sm">
+    <header className="bg-slate-900 text-white border-b border-slate-800 h-14 px-4 flex items-center justify-between z-30 shrink-0 select-none shadow-sm">
       {/* Left: Company Logo from Public Folder */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <img
           src={logoUrl}
           alt={companyName ? `${companyName} Logo` : 'Company Logo'}
-          className="h-5 max-w-[160px] object-contain"
+          className="h-8 max-w-[200px] object-contain"
           onError={(e) => {
             // Fallback if logo fails to load
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
         {companyName && (
-          <span className="font-semibold text-xs text-slate-300 border-l border-slate-700/80 pl-2.5 hidden sm:inline tracking-tight">
+          <span className="font-semibold text-sm text-slate-200 border-l border-slate-700 pl-3 hidden sm:inline">
             {companyName}
           </span>
         )}
@@ -39,17 +39,17 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           id="btn-toggle-fullscreen"
           onClick={onToggleFullscreen}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 hover:text-white transition-colors cursor-pointer text-[11px] font-medium"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:text-white transition-colors cursor-pointer text-xs font-medium"
           title={isFullscreen ? 'Exit Fullscreen' : 'Full Screen View'}
         >
           {isFullscreen ? (
             <>
-              <Minimize2 className="w-3.5 h-3.5 text-amber-400" />
+              <Minimize2 className="w-4 h-4 text-amber-400" />
               <span className="hidden sm:inline">Exit Fullscreen</span>
             </>
           ) : (
             <>
-              <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+              <Maximize2 className="w-4 h-4 text-amber-400" />
               <span className="hidden sm:inline">Full Screen</span>
             </>
           )}
