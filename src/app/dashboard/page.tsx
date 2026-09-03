@@ -18,11 +18,11 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] w-full bg-slate-950 px-6 py-10">
+    <div className="min-h-[calc(100vh-3.5rem)] w-full bg-slate-50 dark:bg-slate-950 px-6 py-10">
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Dashboards</h1>
-          <p className="text-sm text-slate-400">Select a report to view</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Dashboards</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Select a report to view</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -30,10 +30,10 @@ export default async function DashboardPage() {
             <Link
               key={report.key}
               href={`/dashboard/${report.key}`}
-              className="block bg-slate-900 border border-slate-800 hover:border-amber-400/60 rounded-xl p-5 shadow-sm transition-colors"
+              className="block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/60 dark:hover:border-amber-400/60 rounded-xl p-5 shadow-sm transition-colors"
             >
-              <h2 className="text-sm font-semibold text-white">{report.label}</h2>
-              <p className="text-xs text-slate-500 mt-1">Open report</p>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{report.label}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Open report</p>
             </Link>
           ))}
         </div>

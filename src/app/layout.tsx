@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { getSessionEmail } from '@/lib/auth/session';
 import { AuthHeader } from '@/components/AuthHeader';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'Manomay Analytics | Power BI Viewer',
@@ -24,10 +25,12 @@ export default async function RootLayout({
   const email = await getSessionEmail();
 
   return (
-    <html lang="en">
-      <body className="bg-slate-950">
-        <AuthHeader email={email} />
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <ThemeProvider>
+          <AuthHeader email={email} />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
