@@ -41,7 +41,7 @@ add/remove a user or change what a role can see.
    Valid keys are the ones in [src/lib/powerbi/config.ts](src/lib/powerbi/config.ts)
    (`resource-utilization`, `resource-utilization-without-cost`,
    `revenue-tracking`, `timesheets-tracking`, `contracts-tracking`,
-   `status-updates`).
+   `status-updates`, `project-budget-tracking`).
 
 A user missing from `USERS` is rejected at login. A user whose role has no
 entry (or an empty one) in `ROLE_REPORTS` signs in fine but lands on
@@ -65,3 +65,5 @@ entry (or an empty one) in `ROLE_REPORTS` signs in fine but lands on
 npm run build
 npm start
 ```
+
+
