@@ -33,3 +33,10 @@ export const REPORTS: ReportDefinition[] = [
 export function getReportByKey(key: string): ReportDefinition | undefined {
   return REPORTS.find((r) => r.key === key);
 }
+
+// Reports are opened directly on Power BI's own site — no iframe embedding,
+// no service-principal embed token, no trial banner. Power BI's own login
+// and per-user workspace access become the real security boundary.
+export function getReportUrl(report: ReportDefinition): string {
+  return `https://app.powerbi.com/groups/${report.groupId}/reports/${report.reportId}`;
+}
