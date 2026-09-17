@@ -62,7 +62,7 @@ jobs:
       # Pulls this project's settings AND its Environment Variables from
       # Vercel (configured in the Vercel dashboard, not in this repo) so the
       # build below has the real runtime config without anything being
-      # hardcoded or committed here.
+      # hardcoded or committed here
       - name: Pull Vercel project settings & environment variables
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
