@@ -1,4 +1,4 @@
-# Architecture & Power BI Integration Specification
+ # Manomay Analytics Architecture & Power BI Integration Specification
 
 **Date:** September 18, 2026  
 **Project:** Manomay Analytics
@@ -110,25 +110,25 @@ ROLE_REPORTS="admin:[key1:key2...],viewer:[key...]"
 # ==============================================================================
 
 # Report URL: Resource Utilization
-PBI_REPORT_URL_RESOURCE_UTILIZATION="https://app.powerbi.com/reportEmbed?reportId=ee08367f-ce29-46b2-aec3-897504412ae0&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_RESOURCE_UTILIZATION="<PowerBi_Report_URL>"
 
 # Report URL: Resource Utilization (Without Cost)
-PBI_REPORT_URL_RESOURCE_UTILIZATION_WITHOUT_COST="https://app.powerbi.com/reportEmbed?reportId=cc19b427-b7c9-43ba-a90f-0a509c2e86c5&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_RESOURCE_UTILIZATION_WITHOUT_COST="<PowerBi_Report_URL>"
 
 # Report URL: Revenue Tracking
-PBI_REPORT_URL_REVENUE_TRACKING="https://app.powerbi.com/reportEmbed?reportId=df540fc1-0497-49d4-abed-d3a5ebba32a7&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_REVENUE_TRACKING="<PowerBi_Report_URL>"
 
 # Report URL: Timesheets Tracking
-PBI_REPORT_URL_TIMESHEETS_TRACKING="https://app.powerbi.com/reportEmbed?reportId=368fb7b3-8763-48f3-917b-41e186d2e519&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_TIMESHEETS_TRACKING="<PowerBi_Report_URL>"
 
 # Report URL: Contracts Tracking
-PBI_REPORT_URL_CONTRACTS_TRACKING="https://app.powerbi.com/reportEmbed?reportId=e0f83a78-dcb0-4c08-9f42-84322c847d13&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_CONTRACTS_TRACKING="<PowerBi_Report_URL>"
 
 # Report URL: Status Updates
-PBI_REPORT_URL_STATUS_UPDATES="https://app.powerbi.com/reportEmbed?reportId=c7edb795-cea6-48e7-83b2-6692184a0cda&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_STATUS_UPDATES="<PowerBi_Report_URL>"
 
 # Report URL: Project Budget Tracking
-PBI_REPORT_URL_PROJECT_BUDGET_TRACKING="https://app.powerbi.com/reportEmbed?reportId=6319278b-a05b-4da9-b9aa-fdc91d9b4d72&autoAuth=true&groupId=73d95843-9473-4315-98d2-cb9923939fda&ctid=498d20b8-3f6d-4195-ab21-c4f8091a3624"
+PBI_REPORT_URL_PROJECT_BUDGET_TRACKING="<PowerBi_Report_URL>"
 ```
 
 ---
