@@ -59,12 +59,12 @@ jobs:
           echo "VERCEL_PROJECT_ID is set: $([ -n "$VERCEL_PROJECT_ID" ] && echo yes || echo NO)"
           echo "VERCEL_PROJECT_ID length: ${#VERCEL_PROJECT_ID}"
 
-      # # Pulls this project's settings AND its Environment Variables from
-      # # Vercel (configured in the Vercel dashboard, not in this repo) so the
-      # # build below has the real runtime config without anything being
-      # # hardcoded or committed here
-      # - name: Pull Vercel project settings & environment variables
-      #   run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      # Pulls this project's settings AND its Environment Variables from
+      # Vercel (configured in the Vercel dashboard, not in this repo) so the
+      # build below has the real runtime config without anything being
+      # hardcoded or committed here
+      - name: Pull Vercel project settings & environment variables
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       # Vercel's own build pipeline, not a bare `next build` — this app has
       # API routes, middleware, and cookie-based auth, so it needs Vercel's

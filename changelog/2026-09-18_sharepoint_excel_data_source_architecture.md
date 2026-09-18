@@ -14,7 +14,7 @@ The application has no database and no local user/report configuration. **A sing
 
 The app reaches that workbook through the **Microsoft Graph API**, using an app-only (client-credentials) Azure AD registration — no user ever has to sign in to SharePoint/Graph themselves. The workbook is downloaded, parsed into memory, and cached for a configurable TTL so the app isn't hitting Graph on every request.
 
-This document describes how that fetch → parse → cache → authorize → render pipeline works end to end. For the earlier Power BI *embedding* decision (direct iframe vs. Service Principal token minting), see [2026-09-15 System Architecture](2026-09-15_system_architecture_and_powerbi_integration.md). For the rules to follow when *editing* the workbook itself, see [2026-09-18 Excel Workbook Maintenance Guide](2026-09-18_excel_workbook_maintenance_guide.md).
+This document describes how that fetch → parse → cache → authorize → render pipeline works end to end. For the earlier Power BI _embedding_ decision (direct iframe vs. Service Principal token minting), see [2026-09-15 System Architecture](2026-09-15_system_architecture_and_powerbi_integration.md). For the rules to follow when _editing_ the workbook itself, see [2026-09-18 Excel Workbook Maintenance Guide](2026-09-18_excel_workbook_maintenance_guide.md).
 
 ---
 
@@ -127,7 +127,7 @@ sequenceDiagram
 Uses `exceljs` to read the buffer, then:
 
 1. **`Users` sheet (required)** — every row after the header becomes a `{email, password, role}` record in a `Map` keyed by lowercased, trimmed email. Rows missing an email, password, or role are silently skipped. If the sheet is missing entirely, parsing throws (login/dashboard fail outright — see §5).
-2. **Every other sheet** is treated as a **role sheet**, except `ReadMe` and `Users` (matched case-insensitively) which are explicitly excluded. The sheet's own name, lowercased and trimmed, *is* the role key. Each row after the header becomes a `{key, label, embedUrl}` report definition; rows missing a key or embed URL are skipped (this is how "placeholder" rows like `(no report access yet)` are ignored without special-casing them).
+2. **Every other sheet** is treated as a **role sheet**, except `ReadMe` and `Users` (matched case-insensitively) which are explicitly excluded. The sheet's own name, lowercased and trimmed, _is_ the role key. Each row after the header becomes a `{key, label, embedUrl}` report definition; rows missing a key or embed URL are skipped (this is how "placeholder" rows like `(no report access yet)` are ignored without special-casing them).
 3. The result is one object: `{ users: Map<email, UserRecord>, roleReports: Record<role, ReportDefinition[]> }`.
 
 This means **the code never hardcodes a role list or a user count** — both are fully derived from whatever rows/sheets exist in the workbook at parse time. Adding a sheet named `Manager` makes `manager` a valid role with zero code changes.
@@ -142,7 +142,7 @@ This means **the code never hardcodes a role list or a user count** — both are
 ### 4.5 Authentication — [`api/login/route.ts`](../src/app/api/login/route.ts), [`auth/users.ts`](../src/lib/auth/users.ts)
 
 - `verifyCredentials(email, password)` loads workbook data, looks up the email (case-insensitive), and compares the password **as plain text** against the `Password` column. There is no hashing — the workbook is the credential store as-is.
-- On success, the server sets an `httpOnly`, `sameSite=lax` cookie named `session` whose **value is the user's email** (see [`session-constants.ts`](../src/lib/auth/session-constants.ts)), valid 8 hours. There is no server-side session store — the cookie *is* the session, and every subsequent request re-derives role/reports from the workbook by that email.
+- On success, the server sets an `httpOnly`, `sameSite=lax` cookie named `session` whose **value is the user's email** (see [`session-constants.ts`](../src/lib/auth/session-constants.ts)), valid 8 hours. There is no server-side session store — the cookie _is_ the session, and every subsequent request re-derives role/reports from the workbook by that email.
 - If the workbook can't be fetched at all (Graph/SharePoint down, no stale cache), login returns `503` rather than silently allowing/denying access.
 
 ### 4.6 Route gating — [`proxy.ts`](../src/proxy.ts)
@@ -159,7 +159,7 @@ This means **the code never hardcodes a role list or a user count** — both are
 
 - [`dashboard/page.tsx`](../src/app/dashboard/page.tsx): server component, calls `getReportsForEmail`, renders one tile per report (`report.label`, linking to `/dashboard/{report.key}`).
 - [`dashboard/[reportKey]/page.tsx`](../src/app/dashboard/%5BreportKey%5D/page.tsx): re-fetches the same report list, finds the one matching the URL's `reportKey`, and 404s to `/unauthorized` if it's not in the user's current list (so a stale/guessed URL can't leak a report the user's role no longer has).
-- [`ReportViewer.tsx`](../src/components/ReportViewer.tsx): a client component that renders the report's `embedUrl` inside a plain `<iframe>` with a full-screen toggle. Power BI's own `autoAuth=true` organizational embedding handles authenticating the *viewer's* Microsoft 365 identity — the app never brokers a Power BI token itself (see the 2026-09-15 doc for why).
+- [`ReportViewer.tsx`](../src/components/ReportViewer.tsx): a client component that renders the report's `embedUrl` inside a plain `<iframe>` with a full-screen toggle. Power BI's own `autoAuth=true` organizational embedding handles authenticating the _viewer's_ Microsoft 365 identity — the app never brokers a Power BI token itself (see the 2026-09-15 doc for why).
 
 ---
 
@@ -167,12 +167,12 @@ This means **the code never hardcodes a role list or a user count** — both are
 
 From [`.env.example`](../.env.example):
 
-| Variable | Purpose |
-| :-- | :-- |
+| Variable                                                      | Purpose                                                                                                                                              |
+| :------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | App-only Azure AD registration used for Graph client-credentials auth. Needs `Sites.Read.All` or `Files.Read.All` (app permission, admin-consented). |
-| `SHAREPOINT_FILE_URL` | The workbook's SharePoint "Copy link" share URL. |
-| `SHAREPOINT_CACHE_TTL_SECONDS` | How long parsed workbook data is cached before refetching. Default `1800`. |
-| `NEXT_PUBLIC_COMPANY_NAME` | Cosmetic branding only. |
+| `SHAREPOINT_FILE_URL`                                         | The workbook's SharePoint "Copy link" share URL.                                                                                                     |
+| `SHAREPOINT_CACHE_TTL_SECONDS`                                | How long parsed workbook data is cached before refetching. Default `1800`.                                                                           |
+| `NEXT_PUBLIC_COMPANY_NAME`                                    | Cosmetic branding only.                                                                                                                              |
 
 There is intentionally **no env-var fallback** for users or reports — if `SHAREPOINT_FILE_URL` is missing/unreachable and there's no warm cache, login and the dashboard fail outright rather than serving stale/local data silently.
 
@@ -184,11 +184,4 @@ There is intentionally **no env-var fallback** for users or reports — if `SHAR
 - **No per-request Graph validation of the logged-in user.** The session cookie is trusted for 8 hours; a user removed from the `Users` sheet keeps their cookie valid until it expires or they log out, though `getReportsForEmail` will start returning `[]` for them once the cache refreshes (role lookup fails → no reports → `/unauthorized`).
 - **Cache TTL is a single global value** — there's no per-sheet or per-user invalidation; every write to the workbook waits out the same window everywhere.
 - **Report keys are used unencoded in route paths** (`/dashboard/{report.key}`) — see the maintenance guide for why `Report Key` values must stay URL-safe.
-- **Duplicate emails in the `Users` sheet**: since parsing builds a `Map` keyed by email, the *last* matching row wins silently — no error is raised for duplicates.
-
----
-
-## 7. Related Documents
-
-- [2026-09-15 System Architecture & Power BI Integration](2026-09-15_system_architecture_and_powerbi_integration.md) — why report embedding is a direct iframe rather than Service-Principal token minting.
-- [2026-09-18 Excel Workbook Maintenance Guide](2026-09-18_excel_workbook_maintenance_guide.md) — field-by-field rules for editing the workbook safely.
+- **Duplicate emails in the `Users` sheet**: since parsing builds a `Map` keyed by email, the _last_ matching row wins silently — no error is raised for duplicates.
