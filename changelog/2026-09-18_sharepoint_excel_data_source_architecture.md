@@ -1,4 +1,4 @@
-# SharePoint Excel Data Source — Architecture & Data Flow
+# Manomay Analytics SharePoint Excel Data Source — Architecture & Data Flow
 
 **Date:** September 18, 2026
 **Project:** Manomay Analytics
