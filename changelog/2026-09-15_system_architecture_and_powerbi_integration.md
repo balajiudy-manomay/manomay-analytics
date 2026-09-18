@@ -1,13 +1,11 @@
 # Architecture & Power BI Integration Specification
 
 **Date:** September 18, 2026  
-**Project:** Manomay Analytics Portal  
-**Document Version:** 2.0.0  
-**Target Audience:** IT Team, System Administrators, DevOps & Cloud Engineers
+**Project:** Manomay Analytics
 
 ---
 
-## 1. Executive Summary
+## 1. Summary
 
 This document outlines the updated system architecture for the **Manomay Analytics Portal**, detailing how Power BI reports are embedded into the Next.js application using **Direct Organizational Embedding (Direct Iframe with User Authentication)**.
 
@@ -80,7 +78,7 @@ sequenceDiagram
 
 ---
 
-## 4. Key Architectural Changes in
+## 4. Key Changes
 
 ### What Was Removed:
 - **Service Principal Credentials:** `PBI_CLIENT_SECRET`, `PBI_CLIENT_ID`, `PBI_TENANT_ID`, and `PBI_WORKSPACE_ID` environment variables.
