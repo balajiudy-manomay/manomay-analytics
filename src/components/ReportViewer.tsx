@@ -54,7 +54,7 @@ export function ReportViewer({ label, embedUrl }: ReportViewerProps) {
             src={embedUrl}
             title={label}
             className="w-full h-full border-0"
-            allow="fullscreen"
+            allow="fullscreen; unload *"
             allowFullScreen
           />
         ) : (
