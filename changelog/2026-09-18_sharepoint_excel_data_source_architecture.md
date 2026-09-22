@@ -1,6 +1,6 @@
 # Manomay Analytics SharePoint Excel Data Source — Architecture & Data Flow
 
-**Date:** September 18, 2026
+**Date:** September 18, 2026 (Updated for Report Access Matrix)
 **Project:** Manomay Analytics
 
 ---
@@ -88,16 +88,16 @@ sequenceDiagram
 │   ├── store.ts        In-memory cache + TTL + stale-on-error fallback   │
 │   ├── graphAuth.ts     App-only Graph token (client-credentials)        │
 │   ├── graphFile.ts     Downloads the workbook via /shares/{id}/content  │
-│   └── parseWorkbook.ts Parses Users sheet + one sheet per role          │
+│   └── parseWorkbook.ts Parses Users sheet + Report Access Matrix matrix │
 └──────────────────────────────────┬────────────────────────────────────────┘
                                     │ Graph API (HTTPS, app-only token)
                                     ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ MICROSOFT 365                                                            │
 │   ├── Azure AD app registration (AZURE_TENANT_ID/CLIENT_ID/SECRET)      │
-│   └── SharePoint site: access-control.xlsx (Users sheet + role sheets) │
+│   └── SharePoint site: access-control.xlsx (Users & Report Access Matrix)│
 └──────────────────────────────────┬────────────────────────────────────────┘
-                                    │ Report embed URLs (from role sheet)
+                                    │ Report embed URLs (from role matrix)
                                     ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ MICROSOFT POWER BI                                                       │
@@ -127,10 +127,11 @@ sequenceDiagram
 Uses `exceljs` to read the buffer, then:
 
 1. **`Users` sheet (required)** — every row after the header becomes a `{email, password, role}` record in a `Map` keyed by lowercased, trimmed email. Rows missing an email, password, or role are silently skipped. If the sheet is missing entirely, parsing throws (login/dashboard fail outright — see §5).
-2. **Every other sheet** is treated as a **role sheet**, except `ReadMe` and `Users` (matched case-insensitively) which are explicitly excluded. The sheet's own name, lowercased and trimmed, _is_ the role key. Each row after the header becomes a `{key, label, embedUrl}` report definition; rows missing a key or embed URL are skipped (this is how "placeholder" rows like `(no report access yet)` are ignored without special-casing them).
-3. The result is one object: `{ users: Map<email, UserRecord>, roleReports: Record<role, ReportDefinition[]> }`.
+2. **`Report Access Matrix` sheet (recommended)** — Row 1 defines report fields in columns 1–3 (`Report Key`, `Report List`, `Embed URL`) and role names in columns 4+. Each subsequent row represents a report; placing an `'X'` (case-insensitive) under a role column grants that role access to the report.
+3. **Legacy per-role sheets (fallback)** — If `Report Access Matrix` is not present, every other sheet (except `ReadMe` and `Users`) is parsed as an individual role sheet.
+4. The result is one object: `{ users: Map<email, UserRecord>, roleReports: Record<role, ReportDefinition[]> }`.
 
-This means **the code never hardcodes a role list or a user count** — both are fully derived from whatever rows/sheets exist in the workbook at parse time. Adding a sheet named `Manager` makes `manager` a valid role with zero code changes.
+This means **the code never hardcodes a role list or a user count** — both are fully derived from whatever role columns/sheets exist in the workbook at parse time. Adding a role column named `marketing-manager` in `Report Access Matrix` makes `marketing-manager` a valid role with zero code changes.
 
 ### 4.4 Caching — [`store.ts`](../src/lib/sharepoint/store.ts)
 
@@ -153,7 +154,7 @@ This means **the code never hardcodes a role list or a user count** — both are
 
 - `getReportsForEmail(email)`: looks up the user's current role via `getRoleForEmail`, then returns `roleReports[role] || []` from the (possibly cached) workbook data.
 - Because this re-reads the workbook (subject to cache TTL) on every dashboard request, **removing a user's role/reports in the sheet takes effect within one cache TTL window**, not instantly and not requiring a redeploy.
-- If the role has no matching sheet, or the sheet has no valid rows, the user gets an empty list and is redirected to `/unauthorized`.
+- If the role has no matching column/sheet, or the sheet has no valid rows, the user gets an empty list and is redirected to `/unauthorized`.
 
 ### 4.8 Rendering
 
