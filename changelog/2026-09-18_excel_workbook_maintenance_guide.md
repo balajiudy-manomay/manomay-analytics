@@ -21,13 +21,14 @@ Follow the rules below exactly. For how the app consumes this data internally, s
 
 | Sheet name | Required? | Purpose |
 | :-- | :-- | :-- |
-| `Users` | **Yes, exact name** | One row per person who can log in. |
+| `Users` | **Yes, exact name** | One row per person who can log in (`Email`, `Password`, `Role`). |
+| `Report Access Matrix` | **Yes (recommended)** | Single-sheet matrix mapping reports (`Report Key`, `Report List`, `Embed URL`) to roles via role columns (`X` = access). |
 | `ReadMe` | No | Free-form notes for humans. Never read by the app. |
-| *(one sheet per role, e.g. `Admin`, `Viewer`, `Manager`)* | At least one, to be useful | The list of reports that role can see. |
+| *(Legacy per-role sheets)* | Fallback | Legacy setup: one sheet per role (e.g. `admin`, `project-manager`). |
 
-**The sheet name *is* the role.** There is no separate "roles" table. If a role is referenced in `Users` but has no sheet with that exact name, everyone with that role sees **zero reports** and lands on the "No access" page — no warning, no error.
+**Role columns in `Report Access Matrix` define valid roles.** If a role is referenced in `Users` but has no matching role column in `Report Access Matrix`, everyone with that role sees **zero reports** and lands on the "No access" page — no warning, no error.
 
-`ReadMe` and `Users` are reserved names (matched case-insensitively) — **never** name a role sheet `ReadMe` or `Users`.
+`ReadMe`, `Users`, and `Report Access Matrix` are reserved names (matched case-insensitively).
 
 ---
 
@@ -53,8 +54,8 @@ Row 1 is treated as a header and is always skipped — put whatever column title
    - Must be non-empty, or the row is silently ignored.
    - Treat this column (and the whole workbook) as sensitive — anyone with edit/read access to this file can see every user's password.
 4. **Role (column C)**
-   - Matched **case-insensitively**, only outer whitespace trimmed (internal spacing/punctuation must match exactly).
-   - **Must exactly equal the name of an existing role sheet** (see §4). `Manager` in this column requires a sheet literally named `Manager` (or `manager`, `MANAGER` — case doesn't matter, but spelling and spacing do).
+   - Matched **case-insensitively**, only outer whitespace trimmed.
+   - **Must exactly equal a role column header in `Report Access Matrix`** (see §4). `manager` in this column requires a column header literally named `manager` (or `Manager`, `MANAGER` — case doesn't matter, but spelling and spacing do).
    - Must be non-empty, or the row is silently ignored.
 5. **Blank rows** anywhere (no email, or no password, or no role) are silently skipped — safe to leave gaps, but don't expect a half-filled row to "partially" work.
 
@@ -62,69 +63,66 @@ Row 1 is treated as a header and is always skipped — put whatever column title
 
 | Email | Password | Role |
 | :-- | :-- | :-- |
-| jane.doe@manomay.biz | Str0ngPass! | Admin |
-| ravi.kumar@manomay.biz | AnotherPass1 | Viewer |
-| priya.singh@manomay.biz | ThirdPass99 | Manager |
+| jane.doe@manomay.biz | Str0ngPass! | admin |
+| ravi.kumar@manomay.biz | AnotherPass1 | project-manager |
+| priya.singh@manomay.biz | ThirdPass99 | finance-manager |
 
 ---
 
-## 4. Role sheets (one per role)
+## 4. The `Report Access Matrix` sheet
 
-Create a new sheet, named **exactly** the way that role appears in the `Users` sheet's Role column (case-insensitive, but spelling/spacing must match).
+Sheet name must be **`Report Access Matrix`** (matched case-insensitively).
 
-Row 1 is a header and is always skipped. Data starts at row 2.
+Row 1 is the header row.
 
-| Column | A | B | C |
-| :-- | :-- | :-- | :-- |
-| **Field** | Report Key | Report Label | Embed URL |
+| Column | A | B | C | D | E | F... |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Field** | Report Key | Report List | Embed URL | role-1 | role-2 | role-3... |
 
 ### Rules
 
-1. **Report Key (column A)**
-   - Required — a row with no key is silently skipped.
-   - **Must be URL-safe.** This value is placed directly into the page URL as `/dashboard/{Report Key}` with no encoding. Use only letters, numbers, hyphens, or underscores — **no spaces, slashes, question marks, or other special characters.**
-   - Example: `resource-utilization`, `revenue_tracking`.
-   - **Must be unique within the sheet.** If two rows share a key, the page will always resolve to whichever one the app matches first — don't rely on this, keep keys unique per role.
-   - Keys **do not** need to match across different role sheets, but it's good practice to reuse the same key for "the same report" across roles so URLs stay predictable.
-2. **Report Label (column B)**
-   - Optional. This is the human-readable name shown as the tile title on the dashboard and as the page title when viewing the report.
-   - If left blank, the app falls back to showing the **Report Key** itself as the label — so always fill this in for anything user-facing.
-3. **Embed URL (column C)**
-   - Required — a row with no embed URL is silently skipped. This is how you can leave a placeholder/note row (e.g. `(no report access yet)` in column B with columns A/C empty) without it showing up as a broken tile.
-   - Must be a **direct Power BI organizational embed URL** (the standard `app.powerbi.com` report link, with `autoAuth=true`), **not** an embed-token/API URL. The app does not mint Power BI tokens — see [2026-09-15 System Architecture](2026-09-15_system_architecture_and_powerbi_integration.md) for why.
-   - The user viewing the report must already have Power BI workspace access under their own Microsoft 365 account for `autoAuth` to work — this workbook only controls whether the app *shows them the tile/link*, not their underlying Power BI permissions. Grant both.
+1. **Header Row (Row 1)**
+   - Column A: `Report Key`
+   - Column B: `Report List` (display title)
+   - Column C: `Embed URL`
+   - Column D onwards: **Role names** (e.g. `finance-manager`, `project-manager`, `delivery-ops-manager`, `admin`, `org-admin`). The column header name is used directly as the role identifier (case-insensitive). Any internal line breaks in headers are automatically stripped by the app.
+2. **Report Rows (Row 2 onwards)**
+   - **Report Key (column A)**: Required — a row with no key is silently skipped. Must be URL-safe (letters, numbers, hyphens, underscores). Must be unique across the sheet.
+   - **Report List (column B)**: Display name shown on dashboard tiles. If left blank, defaults to `Report Key`.
+   - **Embed URL (column C)**: Direct Power BI embed URL (`autoAuth=true`). Required — a row with no embed URL is skipped.
+   - **Role columns (columns D onwards)**: Place an **`X`** (case-insensitive) in the role's column to grant that role access to the report. Blank or any other character means no access.
 
-### Example — sheet named `Viewer`
+### Example — `Report Access Matrix`
 
-| Report Key | Report Label | Embed URL |
-| :-- | :-- | :-- |
-| resource-utilization | Resource Utilization | `https://app.powerbi.com/reportEmbed?reportId=...&autoAuth=true` |
-| revenue-tracking | Revenue & Target Tracking | `https://app.powerbi.com/reportEmbed?reportId=...&autoAuth=true` |
+| Report Key | Report List | Embed URL | finance-manager | project-manager | admin |
+| :-- | :-- | :-- | :--: | :--: | :--: |
+| resource-utilization | Resource Utilization | `https://app.powerbi.com/reportEmbed?...` | | X | X |
+| revenue-tracking | Revenue & Target Tracking | `https://app.powerbi.com/reportEmbed?...` | X | | X |
 
 ---
 
 ## 5. Common tasks
 
 ### Add a new user
-Add a row to `Users` with an email, password, and a role that already has a matching sheet. Done.
+Add a row to `Users` with an email, password, and a role that exists as a role column in `Report Access Matrix`. Done.
 
 ### Add a brand-new role
-1. Create a new sheet, named exactly what you'll type into the `Users` Role column.
-2. Add report rows to it (Report Key / Label / Embed URL).
-3. Assign the role to users in `Users`.
-No code change or deployment is needed — the app discovers new sheets automatically the next time it refreshes its cache.
+1. Add a new column to `Report Access Matrix` starting at column D (or after existing role columns) with the role name as the header (e.g. `marketing-manager`).
+2. Mark `'X'` in that column for any reports that role should see.
+3. Assign the new role to users in `Users`.
+No code change or deployment is needed — the app discovers new role columns automatically when the cache refreshes.
 
 ### Remove a user's access
 Either delete their row from `Users`, or clear/blank one of the three cells (email/password/role) — a partially blank row is treated as if it doesn't exist.
 
-### Remove a report from a role
-Delete the row, or blank out the **Embed URL** cell (the row will then be skipped even if the key/label are still there).
+### Give or remove report access for a role
+Add or remove the `'X'` in that role's column on the report's row in `Report Access Matrix`.
+
+### Add a brand-new report
+Add a new row in `Report Access Matrix` with `Report Key`, `Report List`, `Embed URL`, and mark `'X'` under every role column that should see it.
 
 ### Retire a role entirely
-Delete its sheet **and** remove/reassign every `Users` row that referenced it. If you delete the sheet but leave users pointing at that role name, those users simply get zero reports — no error is raised.
-
-### Rename a role
-Rename the sheet **and** update every matching row in `Users`'s Role column to the new spelling — the two must always match exactly (case-insensitive).
+Delete its column from `Report Access Matrix` **and** remove/reassign every `Users` row that referenced it.
 
 ---
 
@@ -140,10 +138,11 @@ The app caches the parsed workbook in memory for **30 minutes by default** (conf
 
 ## 7. Checklist before saving the workbook
 
-- [ ] Every role name in `Users` column C has a sheet with that **exact** name (case-insensitive).
+- [ ] Every role name in `Users` column C has a matching role column in `Report Access Matrix` (case-insensitive).
 - [ ] No two rows in `Users` share the same email.
 - [ ] Every `Report Key` is URL-safe (letters/numbers/hyphens/underscores only, no spaces).
-- [ ] Every `Report Key` is unique within its own role sheet.
+- [ ] Every `Report Key` is unique across the sheet.
 - [ ] Every real report row has a non-empty Embed URL, and it's a direct `app.powerbi.com` embed link with `autoAuth=true`.
+- [ ] Role access permissions are marked with an `'X'` under the appropriate role columns.
 - [ ] Anyone granted a report tile here also has the matching Power BI workspace permission in Power BI itself.
-- [ ] `ReadMe` and `Users` are not used as role sheet names.
+- [ ] `ReadMe`, `Users`, and `Report Access Matrix` are not used as individual role sheet names.

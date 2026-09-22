@@ -45,7 +45,7 @@ For detailed architecture diagrams, technical specifications, and maintenance gu
 User accounts and report permissions are driven entirely by an Excel workbook (`access-control.xlsx`) hosted in SharePoint:
 
 - **`Users` Sheet**: Contains user logins (`email` and `password`) and their assigned `role`.
-- **Role Sheets (`Admin`, `Viewer`, etc.)**: Each role has its own sheet listing the allowed Power BI reports (`key`, `label`, `embedUrl`).
+- **`Report Access Matrix` Sheet**: Matrix listing all reports (`Report Key`, `Report List`, `Embed URL`) with columns for each role containing an `'X'` to grant access (with fallback support for legacy per-role sheets).
 - **Caching**: The workbook data is fetched via Microsoft Graph API and cached in memory for the duration specified by `SHAREPOINT_CACHE_TTL_SECONDS`.
 
 ### Authentication & Security
