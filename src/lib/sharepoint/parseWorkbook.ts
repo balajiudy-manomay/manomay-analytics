@@ -17,7 +17,7 @@ export interface WorkbookData {
   roleReports: Record<string, ReportDefinition[]>;
 }
 
-const NON_ROLE_SHEETS = new Set(['readme', 'users']);
+const NON_ROLE_SHEETS = new Set(['readme', 'users', 'report access matrix']);
 
 function cellText(row: ExcelJS.Row, col: number): string {
   const value = row.getCell(col).value;
@@ -28,8 +28,8 @@ function cellText(row: ExcelJS.Row, col: number): string {
 }
 
 // Parses the access-control workbook: a 'Users' sheet (Email, Password, Role)
-// plus one sheet per role named exactly after that role (Report Key, Report
-// Label, Embed URL). See the workbook's own 'ReadMe' sheet for the full spec.
+// plus either a single 'Report Access Matrix' sheet (Report Key, Report List, Embed URL, [Roles...])
+// or legacy individual role sheets. See the workbook's own 'ReadMe' sheet for full spec.
 export async function parseWorkbook(buffer: Buffer): Promise<WorkbookData> {
   const workbook = new ExcelJS.Workbook();
   // exceljs's bundled Buffer type can mismatch @types/node's across versions;
@@ -52,21 +52,61 @@ export async function parseWorkbook(buffer: Buffer): Promise<WorkbookData> {
   });
 
   const roleReports: Record<string, ReportDefinition[]> = {};
-  for (const sheet of workbook.worksheets) {
-    const sheetName = sheet.name.trim();
-    if (NON_ROLE_SHEETS.has(sheetName.toLowerCase())) continue;
 
-    const role = sheetName.toLowerCase();
-    const reports: ReportDefinition[] = [];
-    sheet.eachRow((row, rowNumber) => {
+  const matrixSheet = workbook.worksheets.find(
+    (sheet) => sheet.name.trim().toLowerCase() === 'report access matrix'
+  );
+
+  if (matrixSheet) {
+    const headerRow = matrixSheet.getRow(1);
+    const roleColumns: { colIndex: number; role: string }[] = [];
+
+    headerRow.eachCell((cell, colNumber) => {
+      if (colNumber >= 4) {
+        const rawText = cellText(headerRow, colNumber);
+        const role = rawText.replace(/[\r\n]+/g, '').trim().toLowerCase();
+        if (role) {
+          roleColumns.push({ colIndex: colNumber, role });
+          if (!roleReports[role]) {
+            roleReports[role] = [];
+          }
+        }
+      }
+    });
+
+    matrixSheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
       const key = cellText(row, 1);
       const label = cellText(row, 2);
       const embedUrl = cellText(row, 3);
-      if (!key || !embedUrl) return; // skips note rows like "(no report access...)"
-      reports.push({ key, label: label || key, embedUrl });
+      if (!key || !embedUrl) return;
+
+      const reportDef: ReportDefinition = { key, label: label || key, embedUrl };
+
+      for (const { colIndex, role } of roleColumns) {
+        const accessVal = cellText(row, colIndex).toUpperCase();
+        if (accessVal === 'X') {
+          roleReports[role].push(reportDef);
+        }
+      }
     });
-    roleReports[role] = reports;
+  } else {
+    for (const sheet of workbook.worksheets) {
+      const sheetName = sheet.name.trim();
+      if (NON_ROLE_SHEETS.has(sheetName.toLowerCase())) continue;
+
+      const role = sheetName.toLowerCase();
+      const reports: ReportDefinition[] = [];
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const key = cellText(row, 1);
+        const label = cellText(row, 2);
+        const embedUrl = cellText(row, 3);
+        if (!key || !embedUrl) return;
+        reports.push({ key, label: label || key, embedUrl });
+      });
+      roleReports[role] = reports;
+    }
   }
 
   return { users, roleReports };
