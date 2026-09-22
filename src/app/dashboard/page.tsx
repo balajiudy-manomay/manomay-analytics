@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getSessionEmail } from '@/lib/auth/session';
-import { getReportKeysForEmail } from '@/lib/auth/access';
-import { REPORTS } from '@/lib/powerbi/config';
+import { getReportsForEmail } from '@/lib/auth/access';
 
 export default async function DashboardPage() {
   const email = await getSessionEmail();
@@ -10,8 +9,7 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const allowedKeys = getReportKeysForEmail(email);
-  const reports = REPORTS.filter((r) => allowedKeys.includes(r.key));
+  const reports = await getReportsForEmail(email);
 
   if (reports.length === 0) {
     redirect('/unauthorized');
