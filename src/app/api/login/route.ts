@@ -11,7 +11,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
   }
 
-  if (!verifyCredentials(email, password)) {
+  let valid: boolean;
+  try {
+    valid = await verifyCredentials(email, password);
+  } catch (err) {
+    console.error('Login failed - SharePoint access-control workbook unreachable:', err);
+    return NextResponse.json(
+      { error: 'Unable to reach the access-control data source. Please try again shortly.' },
+      { status: 503 },
+    );
+  }
+
+  if (!valid) {
     return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
   }
 

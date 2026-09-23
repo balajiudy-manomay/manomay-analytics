@@ -1,69 +1,64 @@
 # Manomay Analytics - Power BI Dashboard Viewer
 
-A Next.js app that embeds Power BI reports for viewers who don't have their own
-Power BI license, using the service-principal ("embed for your customers")
-pattern: one Azure AD app registration mints short-lived embed tokens on
-behalf of everyone who signs in.
+A Next.js application that embeds Power BI reports for authorized team members. Authentication and role-based access control (RBAC) are managed dynamically through a SharePoint Excel workbook (`access-control.xlsx`) accessed via Microsoft Graph API.
+
+---
+
+## Technical Specifications & Changelogs
+
+For detailed architecture diagrams, technical specifications, and maintenance guides, see the [`changelog/`](changelog/README.md) directory:
+
+- [SharePoint Excel Data Source Architecture](changelog/2026-09-18_sharepoint_excel_data_source_architecture.md)
+- [Access-Control Workbook Maintenance Guide](changelog/2026-09-18_excel_workbook_maintenance_guide.md)
+- [System Architecture & Power BI Integration Spec](changelog/2026-09-15_system_architecture_and_powerbi_integration.md)
+
+---
 
 ## Run Locally
 
 **Prerequisites:** Node.js 20+
 
 1. Install dependencies:
-   `npm install`
-2. Copy `.env.example` to `.env` and fill in:
-   - `USERS` and `ROLE_REPORTS` — every login and what they can see (see
-     "Configuring users" below).
-   - `PBI_TENANT_ID`, `PBI_CLIENT_ID`, `PBI_CLIENT_SECRET` — the Azure AD app
-     registration's credentials (client-credentials grant).
-   - `PBI_WORKSPACE_ID` — the Power BI workspace holding the reports.
-   - `PBI_REPORT_ID_*` — one report ID per dashboard screen.
-3. One-time Power BI/Azure setup (outside this repo):
-   - Add the app registration as a **Member** of the workspace.
-   - Enable "Allow service principals to use Power BI APIs" in the Power BI
-     Admin Portal for that app (or its security group).
-   - Make sure the workspace sits on Premium/PPU/Fabric capacity.
-4. Run the dev server:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
 
-## Configuring users
+2. Copy `.env.example` to `.env` and fill in the required variables:
+   - `AZURE_TENANT_ID`: Azure AD Tenant ID.
+   - `AZURE_CLIENT_ID`: Azure AD App Registration Client ID (requires Graph API `Sites.Read.All` or `Files.Read.All`).
+   - `AZURE_CLIENT_SECRET`: Azure AD App Registration Client Secret.
+   - `SHAREPOINT_FILE_URL`: The "Copy link" share URL of the `access-control.xlsx` workbook in SharePoint.
+   - `SHAREPOINT_CACHE_TTL_SECONDS`: Cache duration in seconds (optional, defaults to `1800` / 30 minutes).
 
-Everything lives in two env vars — no code changes, no redeploy needed to
-add/remove a user or change what a role can see.
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-1. **`USERS`** — every login, as `email:password:role` triples, comma-separated:
-   `USERS="alice@manomay.biz:pw1:admin,bob@manomay.biz:pw2:viewer"`
-   Parsed on the email's *first* `:` and the entry's *last* `:`, so passwords
-   may contain `:` (role names must not). No `,` inside a password or role.
-2. **`ROLE_REPORTS`** — each role's allowed report keys, as
-   `role:[key:key:key]` entries, comma-separated:
-   `ROLE_REPORTS="admin:[resource-utilization:revenue-tracking],viewer:[status-updates]"`
-   Valid keys are the ones in [src/lib/powerbi/config.ts](src/lib/powerbi/config.ts)
-   (`resource-utilization`, `resource-utilization-without-cost`,
-   `revenue-tracking`, `timesheets-tracking`, `contracts-tracking`,
-   `status-updates`, `project-budget-tracking`).
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-A user missing from `USERS` is rejected at login. A user whose role has no
-entry (or an empty one) in `ROLE_REPORTS` signs in fine but lands on
-`/unauthorized` — see [src/lib/auth/users.ts](src/lib/auth/users.ts) and
-[src/lib/auth/access.ts](src/lib/auth/access.ts) for the parsers.
+---
 
-## How it works
+## How It Works
 
-- `/login` — a viewer enters their email and password; `POST /api/login`
-  checks both against `USERS`, then sets an httpOnly `session` cookie.
-- `/dashboard` — lists the reports the signed-in user's role can see.
-- `/dashboard/[reportKey]` — embeds one report via `powerbi-client`, using a
-  token minted by `GET /api/embed-token?reportId=...`.
-- `middleware.ts` gates every `/dashboard/*` route on the session cookie being
-  present; each page additionally checks the user's role has access to that
-  specific report.
+### Access Control & Data Source (SharePoint Workbook)
+User accounts and report permissions are driven entirely by an Excel workbook (`access-control.xlsx`) hosted in SharePoint:
 
-## Build
+- **`Users` Sheet**: Contains user logins (`email` and `password`) and their assigned `role`.
+- **`Report Access Matrix` Sheet**: Matrix listing all reports (`Report Key`, `Report List`, `Embed URL`) with columns for each role containing an `'X'` to grant access (with fallback support for legacy per-role sheets).
+- **Caching**: The workbook data is fetched via Microsoft Graph API and cached in memory for the duration specified by `SHAREPOINT_CACHE_TTL_SECONDS`.
+
+### Authentication & Security
+- **`/login`**: Users enter their credentials. `POST /api/login` verifies credentials asynchronously against the `Users` sheet in SharePoint and sets an `httpOnly` session cookie. If SharePoint is unreachable, a `503 Service Unavailable` response is returned.
+- **Edge Proxy (`src/proxy.ts`)**: Protects all `/dashboard/*` routes. Unauthenticated requests are automatically redirected to `/login`.
+- **`/dashboard`**: Displays the list of Power BI reports that the signed-in user's role is permitted to view.
+- **`/dashboard/[reportKey]`**: Verifies that the signed-in user's role has permission for `reportKey`. If authorized, renders the report iframe; if not, redirects to `/unauthorized`.
+
+---
+
+## Build for Production
 
 ```bash
 npm run build
 npm start
 ```
-
-
