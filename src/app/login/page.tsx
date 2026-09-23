@@ -35,7 +35,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
+    <div className="min-h-[calc(100vh-3.5rem)] w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-8">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-lg dark:shadow-2xl space-y-5"

@@ -3,6 +3,8 @@ import { getSessionEmail } from '@/lib/auth/session';
 import { getReportsForEmail } from '@/lib/auth/access';
 import { ReportViewer } from '@/components/ReportViewer';
 
+export const instant = false;
+
 export default async function ReportPage({
   params,
 }: {

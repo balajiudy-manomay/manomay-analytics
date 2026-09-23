@@ -18,8 +18,12 @@ export async function fetchSharedWorkbookBuffer(): Promise<Buffer> {
   const token = await getGraphToken();
   const shareId = encodeShareUrl(shareUrl);
 
-  const res = await fetch(`https://graph.microsoft.com/v1.0/shares/${shareId}/driveItem/content`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await fetch(`https://graph.microsoft.com/v1.0/shares/${shareId}/driveItem/content?t=${Date.now()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    },
     cache: 'no-store',
   });
 
