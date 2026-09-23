@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import './globals.css';
 import { getSessionEmail } from '@/lib/auth/session';
+import { getRoleForEmail } from '@/lib/auth/users';
 import { AuthHeader } from '@/components/AuthHeader';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
@@ -29,7 +30,8 @@ export const metadata: Metadata = {
 
 async function HeaderWithSession() {
   const email = await getSessionEmail();
-  return <AuthHeader email={email} />;
+  const role = email ? await getRoleForEmail(email) : null;
+  return <AuthHeader email={email} role={role ?? null} />;
 }
 
 export default function RootLayout({

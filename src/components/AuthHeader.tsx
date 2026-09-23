@@ -5,22 +5,15 @@ import { useRouter } from 'next/navigation';
 import { LogOut, ChevronDown, Sun, Moon, RefreshCw } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { refreshWorkbookCache } from '@/app/actions/workbook';
+import { formatDisplayName, formatRole } from '@/lib/utils/formatters';
 import { ManomayLogo } from './icons/ManomayLogo';
 
 interface AuthHeaderProps {
   email: string | null;
+  role?: string | null;
 }
 
-function formatDisplayName(email: string): string {
-  const handle = email.split('@')[0];
-  const parts = handle.split(/[\._\-]/).filter(Boolean);
-  if (parts.length >= 2) {
-    return parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-  }
-  return handle.charAt(0).toUpperCase() + handle.slice(1);
-}
-
-export function AuthHeader({ email }: AuthHeaderProps) {
+export function AuthHeader({ email, role }: AuthHeaderProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -87,6 +80,7 @@ export function AuthHeader({ email }: AuthHeaderProps) {
 
   const isDark = resolvedTheme === 'dark';
   const displayName = email ? formatDisplayName(email) : '';
+  const formattedRole = formatRole(role);
   const initial = email ? email.charAt(0).toUpperCase() : '?';
 
   return (
@@ -129,14 +123,23 @@ export function AuthHeader({ email }: AuthHeaderProps) {
               onClick={() => setIsMenuOpen((prev) => !prev)}
               aria-expanded={isMenuOpen}
               aria-haspopup="true"
-              className="group flex items-center gap-2.5 px-2 py-1 rounded-full hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer"
+              className="group flex items-center gap-2.5 px-2.5 py-1 rounded-xl hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition-all duration-150 focus:outline-none cursor-pointer"
             >
               <div className="w-8 h-8 rounded-full bg-slate-900 text-white dark:bg-amber-500 dark:text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 shadow-sm border border-slate-200/80 dark:border-amber-400/30">
                 {initial}
               </div>
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 max-w-[180px] truncate hidden sm:inline">
-                {displayName}
-              </span>
+
+              <div className="flex flex-col items-start hidden sm:flex text-left leading-tight">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white max-w-[170px] truncate">
+                  {displayName}
+                </span>
+                {formattedRole && (
+                  <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    {formattedRole}
+                  </span>
+                )}
+              </div>
+
               <ChevronDown
                 className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-all duration-200 ${
                   isMenuOpen ? 'rotate-180 text-amber-500 opacity-100' : 'opacity-70 group-hover:opacity-100'
@@ -148,7 +151,10 @@ export function AuthHeader({ email }: AuthHeaderProps) {
               <div className="absolute right-0 mt-2 w-60 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800/90 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800/80">
                   <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{email}</p>
+                  {formattedRole && (
+                    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 capitalize mt-0.5">{formattedRole}</p>
+                  )}
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-1">{email}</p>
                 </div>
 
                 <div className="py-1">
