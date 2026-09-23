@@ -1,4 +1,5 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import { getSessionEmail } from '@/lib/auth/session';
 import { AuthHeader } from '@/components/AuthHeader';
@@ -26,18 +27,23 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 };
 
-export default async function RootLayout({
+async function HeaderWithSession() {
+  const email = await getSessionEmail();
+  return <AuthHeader email={email} />;
+}
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const email = await getSessionEmail();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
         <ThemeProvider>
-          <AuthHeader email={email} />
+          <Suspense fallback={<AuthHeader email={null} />}>
+            <HeaderWithSession />
+          </Suspense>
           {children}
         </ThemeProvider>
       </body>

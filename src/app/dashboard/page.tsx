@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getSessionEmail } from '@/lib/auth/session';
 import { getReportsForEmail } from '@/lib/auth/access';
 
+export const instant = false;
+
 export default async function DashboardPage() {
   const email = await getSessionEmail();
   if (!email) {
